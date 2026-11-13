@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>지원금·정책자금 실시간 비교 레이더 | 전국 소상공인·창업·청년 지원사업 모음</title>
+<meta name="description" content="전국 정부·지자체 지원금, 정책자금, 소상공인·청년·창업 지원사업 공고를 매일 자동 수집하여 지역·대상·마감일별로 한눈에 비교할 수 있는 무료 검색 사이트입니다.">
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --primary: #1a365d;
+    --accent: #2563eb;
+    --urgent: #dc2626;
+    --urgent-bg: #fef2f2;
+    --ok: #059669;
+    --ok-bg: #ecfdf5;
+    --text: #1e293b;
+    --muted: #64748b;
+    --border: #e2e8f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    padding-bottom: 40px;
+  }
+  header {
+    background: linear-gradient(135deg, #1a365d 0%, #2563eb 100%);
+    color: #fff;
+    padding: 18px 16px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.15);
+  }
+  .header-top {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  h1 { font-size: 19px; font-weight: 800; letter-spacing: -0.3px; }
+  .subtitle { font-size: 12px; opacity: 0.88; margin-top: 3px; }
+  .badge-live {
+    background: rgba(255,255,255,0.18);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 14px 14px 0; }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .stat-num { font-size: 18px; font-weight: 800; color: var(--primary); }
+  .stat-num.urgent { color: var(--urgent); }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .controls {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .search-input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .filter-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  select {
+    width: 100%;
+    padding: 9px 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 13px;
+    color: var(--text);
+  }
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .chip-btn {
+    border: 1px solid var(--border);
+    background: #f8fafc;
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .chip-btn.active {
+    background: var(--urgent);
+    color: #fff;
+    border-color: var(--urgent);
+  }
+  .result-info { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .item-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  }
+  .item-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .tag {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+  .tag.region { background: #f1f5f9; color: #334155; }
+  .tag.target { background: #f5f3ff; color: #6d28d9; }
+  .tag.src { background: #fffbeb; color: #b45309; }
+  .tag.urgent { background: var(--urgent-bg); color: var(--urgent); }
+  .tag.ok { background: var(--ok-bg); color: var(--ok); }
+  .item-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 8px;
+    word-break: keep-all;
+  }
+  .item-meta {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 10px;
+  }
+  .item-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .btn-link {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 8px;
+  }
+  .guide-box {
+    margin-top: 22px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    font-size: 13px;
+    color: #334155;
+  }
+  .guide-box h2 { font-size: 15px; color: var(--primary); margin-bottom: 8px; }
+  .guide-box ul { padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+  footer {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  footer a { color: var(--primary); text-decoration: none; font-weight: 600; margin: 0 8px; }
+  .empty {
+    text-align: center;
+    padding: 40px 16px;
+    color: var(--muted);
+    background: var(--card);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+  }
+  @media (max-width: 640px) {
+    .filter-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-top">
+    <div>
+      <h1>지원금·정책자금 비교 레이더</h1>
+      <div class="subtitle">기업마당·창업넷 공식 지원사업 매일 자동 비교</div>
+    </div>
+    <div class="badge-live" id="updatedAt">최신화 중</div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-num" id="statTotal">0</div>
+      <div class="stat-label">모집 중 공고</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num urgent" id="statUrgent">0</div>
+      <div class="stat-label">7일 내 마감임박</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statFiltered">0</div>
+      <div class="stat-label">조건 일치 건수</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <input type="text" id="searchInput" class="search-input" placeholder="검색어 입력 (예: 소상공인, 청년, 시설개선, 창업, 서울)">
+    <div class="filter-row">
+      <select id="regionSelect"><option value="">전체 지역</option></select>
+      <select id="targetSelect"><option value="">전체 대상</option></select>
+      <select id="catSelect"><option value="">전체 분야</option></select>
+      <select id="sourceSelect"><option value="">전체 출처</option></select>
+    </div>
+    <div class="toggle-row">
+      <button type="button" id="urgentToggle" class="chip-btn">마감임박(7일 이내)만 보기</button>
+      <span class="result-info" id="resultInfo">0건 표시</span>
+    </div>
+  </div>
+
+  <div class="list" id="grantList"></div>
+
+  <section class="guide-box">
+    <h2>지원금·정책자금 공고 확인 시 핵심 체크사항</h2>
+    <ul>
+      <li><strong>지역 및 사업장 소재지 확인</strong>: 지자체 공고는 사업자등록증상 소재지나 대표자 주소지가 해당 지역이어야 신청 가능합니다.</li>
+      <li><strong>마감일 및 예산 소진 여부</strong>: '예산 소진 시까지' 공고는 선착순으로 조기 마감되므로 서류 구비 후 즉시 접수하는 편이 유리합니다.</li>
+      <li><strong>중복 지원 제한 확인</strong>: 동일 연도 내 유사 지원사업을 이미 수혜한 경우 중복 신청이 제한될 수 있으므로 공고문 원문의 제외 대상을 반드시 확인하세요.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <div>
+      <a href="about.html">사이트 소개·이용안내</a>
+      <a href="privacy.html">개인정보처리방침</a>
+    </div>
+    <div>공공 포털(기업마당·창업넷) 공개 공고 기반 자동 정리 정보</div>
+  </footer>
+</div>
+
+<script>
+const DB = {"updated_at":"2026-11-13 19:50","total_count":112,"urgent_count":39,"items":[{"id":"PBLN_000000000127860","source":"기업마당","category":"내수","region":"전남광주","target":"중소기업·전체","title":"[전남광주] 2026년 가전공장AI기반자율제조운영기술개발 수혜기업 모집 공고(기계장비산업기술개발사업)","period":"2026-11-10 ~ 2026-11-13","status":"마감임박(D-0)","days_left":0,"agency":"산업통상부","executor":"한국전자기술연구원","registered_at":"2026-11-11","views":3024,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127860"},{"id":"PBLN_000000000127859","source":"기업마당","category":"기술","region":"부산","target":"창업·예비창업","title":"[부산] 2026년 의료·헬스케어 스타트업 인큐베이터 조성사업 기술닥터(전문가컨설팅) 프로그램 참여 기업 모집 공고","period":"2026-11-09 ~ 2026-11-13","status":"마감임박(D-0)","days_left":0,"agency":"부산광역시","executor":"부산대학교병원","registered_at":"2026-11-11","views":2808,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127859"},{"id":"PBLN_000000000127865","source":"기업마당","category":"인력","region":"강원","target":"청년","title":"[강원] 태백시 태백주도형 청년일자리사업 참여자 4차 추가모집 공고","period":"2026-11-11 ~ 2026-11-13","status":"마감임박(D-0)","days_left":0,"agency":"강원특별자치도","executor":"기초자치단체","registered_at":"2026-11-11","views":2535,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127865"},{"id":"PBLN_000000000127863","source":"기업마당","category":"인력","region":"충북","target":"청년","title":"[충북] 보은군 2026년 중소기업 청년재직자 고용안정 지원사업 추가 모집 공고","period":"2026-11-10 ~ 2026-11-13","status":"마감임박(D-0)","days_left":0,"agency":"충청북도","executor":"기초자치단체","registered_at":"2026-11-11","views":2525,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127863"},{"id":"PBLN_000000000127877","source":"기업마당","category":"인력","region":"경기","target":"중소기업·전체","title":"[경기] 시흥시 2026년 산업안전 개선 지원사업 추가모집 연장 공고","period":"2026-11-11 ~ 2026-11-15","status":"마감임박(D-2)","days_left":2,"agency":"경기도","executor":"시흥산업진흥원","registered_at":"2026-11-12","views":1056,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127877"},{"id":"KST_179759","source":"창업넷","category":"창업교육","region":"서울","target":"중소기업·전체","title":"소공인 역량강화 아카데미 5기 공고","period":"2026-11-06 ~ 2026-11-16","status":"마감임박(D-3)","days_left":3,"agency":"서울시 강동가죽제조지원센터","executor":"서울시 강동가죽제조지원센터","registered_at":"2026-11-09","views":4081,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179759"},{"id":"PBLN_000000000127867","source":"기업마당","category":"경영","region":"강원","target":"중소기업·전체","title":"[강원] 홍천군 2026년 내수면 노후선외기 대체 지원사업 사업자 모집 재공고","period":"2026-11-09 ~ 2026-11-16","status":"마감임박(D-3)","days_left":3,"agency":"강원특별자치도","executor":"기초자치단체","registered_at":"2026-11-11","views":2393,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127867"},{"id":"PBLN_000000000127878","source":"기업마당","category":"기술","region":"전북","target":"중소기업·전체","title":"2026년 6차 전북 기업성장 환류형 상생일자리 지원사업 참여기업 모집 공고(BIONE 고용혁신 프로젝트)","period":"2026-11-11 ~ 2026-11-16","status":"마감임박(D-3)","days_left":3,"agency":"전북특별자치도","executor":"전북바이오융합산업진흥원","registered_at":"2026-11-12","views":1037,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127878"},{"id":"PBLN_000000000127879","source":"기업마당","category":"기술","region":"경북","target":"중소기업·전체","title":"[경북] 의성군 2026년 5차 지식재산 긴급지원 사업 모집 공고","period":"2026-11-10 ~ 2026-11-16","status":"마감임박(D-3)","days_left":3,"agency":"경상북도","executor":"경북북부지식재산센터","registered_at":"2026-11-12","views":981,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127879"},{"id":"PBLN_000000000127854","source":"기업마당","category":"수출","region":"경북","target":"중소기업·전체","title":"[경북] 2026년 동유럽 무역사절단 파견 참가기업 모집 공고","period":"2026-11-10 ~ 2026-11-17","status":"마감임박(D-4)","days_left":4,"agency":"경상북도","executor":"경상북도경제진흥원","registered_at":"2026-11-11","views":2502,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127854"},{"id":"KST_179769","source":"창업넷","category":"창업교육","region":"전국","target":"창업·예비창업","title":"스타트업을 위한 B2B 영업 전략 특강","period":"2026-11-10 ~ 2026-11-17","status":"마감임박(D-4)","days_left":4,"agency":"한국기술교육대학교 산학협력단","executor":"한국기술교육대학교 산학협력단","registered_at":"2026-11-11","views":2307,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179769"},{"id":"PBLN_000000000127852","source":"기업마당","category":"내수","region":"전국","target":"중소기업·전체","title":"행복한백화점 매장 입점모집(3층 아동) 공고","period":"2026-11-10 ~ 2026-11-17","status":"마감임박(D-4)","days_left":4,"agency":"중소벤처기업부","executor":"한국중소벤처기업유통원","registered_at":"2026-11-11","views":1653,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127852"},{"id":"PBLN_000000000127903","source":"기업마당","category":"기술","region":"전북","target":"중소기업·전체","title":"[전북] 2026년 6차 전북지역기술혁신허브 맞춤형 기술지원 참여기업 모집 공고(전북지역기술혁신허브 비R&D 지원사업)","period":"2026-11-12 ~ 2026-11-17","status":"마감임박(D-4)","days_left":4,"agency":"전북특별자치도","executor":"전북테크노파크","registered_at":"2026-11-13","views":264,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127903"},{"id":"KST_179765","source":"창업넷","category":"시설·공간·보육","region":"서울","target":"중소기업·전체","title":"STARTUP STARRY NIGHT in Seoul 1:1 밋업(투자, O.I.) 참여기업 모집(11월 허브아워)","period":"2026-11-11 ~ 2026-11-17","status":"마감임박(D-4)","days_left":4,"agency":"서울경제진흥원","executor":"서울경제진흥원","registered_at":"2026-11-10","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179765"},{"id":"PBLN_000000000127862","source":"기업마당","category":"수출","region":"전국","target":"중소기업·전체","title":"2026년 4차 중소기업 품질시스템 구축 지원사업 시행 공고","period":"2026-11-05 ~ 2026-11-18","status":"마감임박(D-5)","days_left":5,"agency":"산업통상부","executor":"한국원자력산업협회","registered_at":"2026-11-11","views":3497,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127862"},{"id":"KST_179747","source":"창업넷","category":"멘토링·컨설팅·교육","region":"경기","target":"창업·예비창업","title":"2026년 경기스타트업플랫폼 온라인 밋업위크(4차) 투자자 모집","period":"2026-11-06 ~ 2026-11-18","status":"마감임박(D-5)","days_left":5,"agency":"주식회사 내비온","executor":"주식회사 내비온","registered_at":"2026-11-09","views":3006,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179747"},{"id":"PBLN_000000000127886","source":"기업마당","category":"기술","region":"경남","target":"중소기업·전체","title":"[경남] 창원시 2026년 창원지능형의료기기지원센터 내 청정실을 활용한 의료·바이오 제조기업 모집 공고","period":"2026-11-11 ~ 2026-11-18","status":"마감임박(D-5)","days_left":5,"agency":"산업통상부","executor":"한국전기연구원","registered_at":"2026-11-12","views":2195,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127886"},{"id":"PBLN_000000000127929","source":"기업마당","category":"경영","region":"전남광주","target":"소상공인·자영업","title":"[전남광주] 강진군 2026년 음식점 입식식탁·경사로 설치 신청업소 모집 재공고","period":"2026-11-09 ~ 2026-11-18","status":"마감임박(D-5)","days_left":5,"agency":"전남광주통합특별시","executor":"기초자치단체","registered_at":"2026-11-13","views":607,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127929"},{"id":"PBLN_000000000127923","source":"기업마당","category":"경영","region":"전남광주","target":"소상공인·자영업","title":"[전남광주] 순천시 2026년 외식업소 시설개선 지원사업 참여업소 추가모집 공고","period":"2026-11-16 ~ 2026-11-18","status":"마감임박(D-5)","days_left":5,"agency":"전남광주통합특별시","executor":"기초자치단체","registered_at":"2026-11-13","views":576,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127923"},{"id":"PBLN_000000000127911","source":"기업마당","category":"기술","region":"전국","target":"중소기업·전체","title":"2026년 4차 KICET 기술이전조건부사업화지원사업 수혜기업 모집 공고","period":"2026-11-12 ~ 2026-11-18","status":"마감임박(D-5)","days_left":5,"agency":"산업통상부","executor":"한국세라믹기술원","registered_at":"2026-11-13","views":349,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127911"},{"id":"PBLN_000000000127909","source":"기업마당","category":"기술","region":"전남광주","target":"중소기업·전체","title":"[전남광주] 2026년 아태 AI 특화지구조성 올인원 AI 사업화지원(투자지원 및 해외수요처발굴지원 프로그램) 공고","period":"2026-11-16 ~ 2026-11-18","status":"마감임박(D-5)","days_left":5,"agency":"전남광주통합특별시","executor":"광주정보문화산업진흥원","registered_at":"2026-11-13","views":306,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127909"},{"id":"PBLN_000000000127885","source":"기업마당","category":"경영","region":"경기","target":"소상공인·자영업","title":"[경기] 하남시 2026년 소상공인 마케팅 판로 지원사업 소상공인 경영환경개선 지원사업 추가모집 공고","period":"2026-11-12 ~ 2026-11-19","status":"마감임박(D-6)","days_left":6,"agency":"경기도","executor":"경기테크노파크","registered_at":"2026-11-12","views":2663,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127885"},{"id":"PBLN_000000000127910","source":"기업마당","category":"기술","region":"강원","target":"중소기업·전체","title":"2026년 강원 3차 미래모빌리티 기업지원 프로그램 모집 공고","period":"2026-11-12 ~ 2026-11-19","status":"마감임박(D-6)","days_left":6,"agency":"산업통상부","executor":"강원테크노파크","registered_at":"2026-11-13","views":256,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127910"},{"id":"KST_179771","source":"창업넷","category":"행사·네트워크","region":"전국","target":"중소기업·전체","title":"2026 강남구 미래산업 기반 기업 활성화 지원사업 데모데이 참관","period":"2026-10-30 ~ 2026-11-19","status":"마감임박(D-6)","days_left":6,"agency":"더인벤션랩","executor":"더인벤션랩","registered_at":"2026-11-11","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179771"},{"id":"KST_179690","source":"창업넷","category":"행사·네트워크","region":"서울","target":"중소기업·전체","title":"2026년 경희대학교 캠퍼스타운 제6회 데모데이: 刮目相對괄목상대","period":"2026-11-02 ~ 2026-11-19","status":"마감임박(D-6)","days_left":6,"agency":"경희대학교 창업보육센터(서울)","executor":"경희대학교 창업보육센터(서울)","registered_at":"2026-11-10","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179690"},{"id":"KST_179754","source":"창업넷","category":"사업화","region":"전국","target":"창업·예비창업","title":"제79회 단디벤처포럼 [2026 단디벤처 투자로드쇼] 1:1 투자상담회·IR 피칭기업 모집","period":"2026-11-09 ~ 2026-11-19","status":"마감임박(D-6)","days_left":6,"agency":"사단법인 단디벤처포럼","executor":"사단법인 단디벤처포럼","registered_at":"2026-11-09","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179754"},{"id":"KST_179763","source":"창업넷","category":"행사·네트워크","region":"행사 안내","target":"중소기업·전체","title":"[행사 안내] 2026 경기도 R&D 성과공유회","period":"2026-11-10 ~ 2026-11-20","status":"마감임박(D-7)","days_left":7,"agency":"주식회사 내비온","executor":"주식회사 내비온","registered_at":"2026-11-10","views":3325,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179763"},{"id":"KST_179776","source":"창업넷","category":"시설·공간·보육","region":"서울","target":"창업·예비창업","title":"호서대학교 서울창업보육센터 신규입주모집 공고","period":"2026-11-12 ~ 2026-11-20","status":"마감임박(D-7)","days_left":7,"agency":"호서대학교산학협력단","executor":"호서대학교산학협력단","registered_at":"2026-11-11","views":2833,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179776"},{"id":"KST_179745","source":"창업넷","category":"행사·네트워크","region":"서울","target":"중소기업·전체","title":"임팩트 페스타 2026 참관객 모집","period":"2026-11-06 ~ 2026-11-20","status":"마감임박(D-7)","days_left":7,"agency":"서울소셜벤처허브","executor":"서울소셜벤처허브","registered_at":"2026-11-09","views":2824,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179745"},{"id":"PBLN_000000000127900","source":"기업마당","category":"경영","region":"경기","target":"중소기업·전체","title":"[경기] 포천시 2026년 축산악취 컨설팅 기반 농가별 맞춤형 지원사업 대상자 추가 모집 공고","period":"2026-11-09 ~ 2026-11-20","status":"마감임박(D-7)","days_left":7,"agency":"경기도","executor":"기초자치단체","registered_at":"2026-11-12","views":2242,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127900"},{"id":"PBLN_000000000127896","source":"기업마당","category":"경영","region":"강원","target":"중소기업·전체","title":"[강원] 양양군 2026년 하반기 착한가격업소 신규모집 공고","period":"2026-11-16 ~ 2026-11-20","status":"마감임박(D-7)","days_left":7,"agency":"강원특별자치도","executor":"기초자치단체","registered_at":"2026-11-12","views":1986,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127896"},{"id":"PBLN_000000000127894","source":"기업마당","category":"경영","region":"강원","target":"중소기업·전체","title":"[강원] 고성군 2026년 하반기 착한가격업소 지정 공고","period":"2026-11-10 ~ 2026-11-20","status":"마감임박(D-7)","days_left":7,"agency":"강원특별자치도","executor":"기초자치단체","registered_at":"2026-11-12","views":1939,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127894"},{"id":"PBLN_000000000127853","source":"기업마당","category":"금융","region":"충북","target":"중소기업·전체","title":"[충북] 2026년 5차 충북 특구 (그린수소산업) 임시허가 지원사업 책임보험료 지원 모집 공고","period":"2026-11-11 ~ 2026-11-20","status":"마감임박(D-7)","days_left":7,"agency":"중소벤처기업부","executor":"충북테크노파크","registered_at":"2026-11-11","views":1436,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127853"},{"id":"PBLN_000000000127876","source":"기업마당","category":"기술","region":"강원","target":"중소기업·전체","title":"[강원] 2026년 4차 지역 주도형 AI 대전환 사업 강원 지역주도 AI 대전환 수요기업 모집 공고","period":"2026-11-11 ~ 2026-11-20","status":"마감임박(D-7)","days_left":7,"agency":"중소벤처기업부","executor":"강원테크노파크","registered_at":"2026-11-12","views":1294,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127876"},{"id":"PBLN_000000000127915","source":"기업마당","category":"기타","region":"대구","target":"중소기업·전체","title":"[대구] 수성구 2026년 일자리창출 우수기업 인증계획 공고","period":"2026-11-09 ~ 2026-11-20","status":"마감임박(D-7)","days_left":7,"agency":"대구광역시","executor":"기초자치단체","registered_at":"2026-11-13","views":565,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127915"},{"id":"PBLN_000000000127902","source":"기업마당","category":"수출","region":"전국","target":"중소기업·전체","title":"중소기업 수출 샘플 국제특송 물류비 지원사업 참여기업 모집 공고","period":"2026-11-09 ~ 2026-11-20","status":"마감임박(D-7)","days_left":7,"agency":"산림청","executor":"한국산림복지진흥원","registered_at":"2026-11-13","views":359,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127902"},{"id":"PBLN_000000000127908","source":"기업마당","category":"수출","region":"대전","target":"중소기업·전체","title":"[대전] 2026년 글로벌화 사전검증 지원사업 CES 2027 연계 Pre-Summit 참가 지원 모집 공고","period":"2026-11-12 ~ 2026-11-20","status":"마감임박(D-7)","days_left":7,"agency":"대전광역시","executor":"대전창조경제혁신센터","registered_at":"2026-11-13","views":272,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127908"},{"id":"PBLN_000000000127913","source":"기업마당","category":"경영","region":"전북","target":"중소기업·전체","title":"[전북] 전주시 2026년 하반기 바이전주우수상품 선정계획 공고","period":"2026-11-16 ~ 2026-11-20","status":"마감임박(D-7)","days_left":7,"agency":"전북특별자치도","executor":"기초자치단체","registered_at":"2026-11-13","views":207,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127913"},{"id":"KST_179795","source":"창업넷","category":"창업교육","region":"전국","target":"창업·예비창업","title":"[창업 디자이너 양성과정] 마포 디자인 크리에이터 스쿨","period":"2026-11-11 ~ 2026-11-20","status":"마감임박(D-7)","days_left":7,"agency":"마포청년창업취업지원센터 나루","executor":"마포청년창업취업지원센터 나루","registered_at":"2026-11-12","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179795"},{"id":"PBLN_000000000127883","source":"기업마당","category":"수출","region":"전국","target":"중소기업·전체","title":"2027년 쇼피 베트남 온라인 판촉전 참가기업 모집 공고","period":"2026-11-12 ~ 2026-11-22","status":"모집중(D-9)","days_left":9,"agency":"산업통상부","executor":"대한무역투자진흥공사","registered_at":"2026-11-12","views":1605,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127883"},{"id":"KST_179791","source":"창업넷","category":"행사·네트워크","region":"경기","target":"창업·예비창업","title":"경기창업혁신공간 서부권 「스담스담」(오픈 네트워킹) 4회차","period":"2026-11-12 ~ 2026-11-22","status":"모집중(D-9)","days_left":9,"agency":"(재)경기도경제과학진흥원","executor":"(재)경기도경제과학진흥원","registered_at":"2026-11-12","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179791"},{"id":"KST_179729","source":"창업넷","category":"시설·공간·보육","region":"경기","target":"중소기업·전체","title":"2027년 고양인쇄문화허브센터 입주기업 모집 공고 ( ~ 2026.11.23.(월)까지)","period":"2026-11-05 ~ 2026-11-23","status":"모집중(D-10)","days_left":10,"agency":"(재)경기대진테크노파크","executor":"(재)경기대진테크노파크","registered_at":"2026-11-09","views":3530,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179729"},{"id":"KST_179751","source":"창업넷","category":"창업교육","region":"창업","target":"창업·예비창업","title":"[창업] 실패하지 않는 내 매장 자리 찾기","period":"2026-11-09 ~ 2026-11-23","status":"모집중(D-10)","days_left":10,"agency":"마포청년창업취업지원센터 나루","executor":"마포청년창업취업지원센터 나루","registered_at":"2026-11-09","views":2955,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179751"},{"id":"PBLN_000000000127864","source":"기업마당","category":"경영","region":"충북","target":"소상공인·자영업","title":"[충북] 보은군 2026년 4분기 청년 소상공인 점포 임차료 지원사업 참여자 모집 공고","period":"2026-11-09 ~ 2026-11-23","status":"모집중(D-10)","days_left":10,"agency":"충청북도","executor":"기초자치단체","registered_at":"2026-11-11","views":2609,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127864"},{"id":"KST_179626","source":"창업넷","category":"시설·공간·보육","region":"세종","target":"창업·예비창업","title":"세종창업키움센터 운영 민간위탁 수탁기관 모집 재공고","period":"2026-11-09 ~ 2026-11-23","status":"모집중(D-10)","days_left":10,"agency":"세종특별자치시청","executor":"세종특별자치시청","registered_at":"2026-11-10","views":2004,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179626"},{"id":"PBLN_000000000127882","source":"기업마당","category":"인력","region":"경기","target":"청년","title":"[경기] 2026년 사회연대경제 청년 일경험 시범사업 참여기업 추가 모집 상시 공고","period":"2026-11-10 ~ 2026-11-23","status":"모집중(D-10)","days_left":10,"agency":"경기도","executor":"경기도사회적경제원","registered_at":"2026-11-12","views":1164,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127882"},{"id":"PBLN_000000000127881","source":"기업마당","category":"경영","region":"서울","target":"중소기업·전체","title":"[서울] 2026 서울게임콘텐츠센터 프라이빗 IR 참여기업 모집 공고","period":"2026-11-11 ~ 2026-11-23","status":"모집중(D-10)","days_left":10,"agency":"서울특별시","executor":"서울경제진흥원","registered_at":"2026-11-12","views":1092,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127881"},{"id":"PBLN_000000000127924","source":"기업마당","category":"경영","region":"전북","target":"중소기업·전체","title":"[전북] 2026년 3차 기능성식품 규제자유특구 규제자유특구혁신사업육성 사업화지원 사업 모집 공고","period":"2026-11-13 ~ 2026-11-23","status":"모집중(D-10)","days_left":10,"agency":"전북특별자치도","executor":"한국식품산업클러스터진흥원","registered_at":"2026-11-13","views":629,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127924"},{"id":"KST_179784","source":"창업넷","category":"행사·네트워크","region":"서울","target":"창업·예비창업","title":"2026년 서울지식재산센터 IP창업클럽: 스타트업 IP:ON (~11/23까지, 선착순)","period":"2026-11-12 ~ 2026-11-23","status":"모집중(D-10)","days_left":10,"agency":"서울경제진흥원","executor":"서울경제진흥원","registered_at":"2026-11-12","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179784"},{"id":"KST_179778","source":"창업넷","category":"멘토링·컨설팅·교육","region":"부산","target":"중소기업·전체","title":"2026년 기업공개(IPO) 상장지원 인사이트데이 참가자 모집(~11.23)","period":"2026-11-10 ~ 2026-11-23","status":"모집중(D-10)","days_left":10,"agency":"부산기술창업투자원","executor":"부산기술창업투자원","registered_at":"2026-11-12","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179778"},{"id":"KST_179794","source":"창업넷","category":"멘토링·컨설팅·교육","region":"서울","target":"중소기업·전체","title":"2026 서울게임콘텐츠센터 프라이빗 IR 참가기업 모집","period":"2026-11-12 ~ 2026-11-23","status":"모집중(D-10)","days_left":10,"agency":"서울경제진흥원","executor":"서울경제진흥원","registered_at":"2026-11-12","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179794"},{"id":"KST_179772","source":"창업넷","category":"멘토링·컨설팅·교육","region":"전북","target":"중소기업·전체","title":"2026 전북콘텐츠코리아랩 AI 활용 콘텐츠(캐릭터) 아이디어 발굴 캠프","period":"2026-11-10 ~ 2026-11-23","status":"모집중(D-10)","days_left":10,"agency":"(재)전라북도콘텐츠융합진흥원","executor":"(재)전라북도콘텐츠융합진흥원","registered_at":"2026-11-11","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179772"},{"id":"PBLN_000000000127857","source":"기업마당","category":"수출","region":"경북","target":"중소기업·전체","title":"[경북] 2027년 K-뷰티산업 국내외 마케팅 지원사업(코스모프로프 볼로냐) 모집 공고","period":"2026-11-10 ~ 2026-11-24","status":"모집중(D-11)","days_left":11,"agency":"경상북도","executor":"경북IT융합산업기술원","registered_at":"2026-11-11","views":2681,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127857"},{"id":"PBLN_000000000127925","source":"기업마당","category":"경영","region":"광주","target":"중소기업·전체","title":"2026년 광양항 자동차 환적화물 인센티브 지원 계획 공고","period":"2026-11-10 ~ 2026-11-24","status":"모집중(D-11)","days_left":11,"agency":"전남광주통합특별시","executor":"기초자치단체","registered_at":"2026-11-13","views":553,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127925"},{"id":"PBLN_000000000127904","source":"기업마당","category":"경영","region":"대전","target":"중소기업·전체","title":"[대전] 중구 2026년 하반기 착한가격업소 신규 모집 공고","period":"2026-11-09 ~ 2026-11-24","status":"모집중(D-11)","days_left":11,"agency":"대전광역시","executor":"기초자치단체","registered_at":"2026-11-13","views":201,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127904"},{"id":"KST_179793","source":"창업넷","category":"멘토링·컨설팅·교육","region":"경기","target":"창업·예비창업","title":"[경과원 X 나이스디앤비] 스타트업 공공시장 진출 실전 특강 - 공공입찰부터 기업·기술평가까지 한번에!","period":"2026-11-12 ~ 2026-11-24","status":"모집중(D-11)","days_left":11,"agency":"(재)경기도경제과학진흥원","executor":"(재)경기도경제과학진흥원","registered_at":"2026-11-12","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179793"},{"id":"PBLN_000000000127872","source":"기업마당","category":"기술","region":"경기","target":"중소기업·전체","title":"[경기] 동부거점 2026년 4차 중소기업 개발생산판로 맞춤형 지원사업 통합 공고","period":"2026-11-11 ~ 2026-11-25","status":"모집중(D-12)","days_left":12,"agency":"경기도","executor":"경기도경제과학진흥원","registered_at":"2026-11-12","views":1536,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127872"},{"id":"PBLN_000000000127873","source":"기업마당","category":"기술","region":"대구","target":"중소기업·전체","title":"[대구] 제3산단 혁신지원센터 인프라지원사업 참여기업(기관) 모집 공고","period":"2026-11-11 ~ 2026-11-25","status":"모집중(D-12)","days_left":12,"agency":"대구광역시","executor":"대구테크노파크","registered_at":"2026-11-12","views":1060,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127873"},{"id":"KST_179790","source":"창업넷","category":"시설·공간·보육","region":"전국","target":"청년","title":"구로구 청년창업지원센터 일반 창업교육(하반기: 7회차): 사업계획서 작성 요령","period":"2026-11-12 ~ 2026-11-25","status":"모집중(D-12)","days_left":12,"agency":"구로구 청년창업지원센터","executor":"구로구 청년창업지원센터","registered_at":"2026-11-12","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179790"},{"id":"PBLN_000000000127917","source":"기업마당","category":"경영","region":"강원","target":"중소기업·전체","title":"2026년 4분기 강원혁신도시 공공기관 연관사업 기업유치 등 지원사업 공고","period":"2026-11-11 ~ 2026-11-26","status":"모집중(D-13)","days_left":13,"agency":"강원특별자치도","executor":"강원혁신도시발전지원센터","registered_at":"2026-11-13","views":579,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127917"},{"id":"PBLN_000000000127918","source":"기업마당","category":"경영","region":"강원","target":"중소기업·전체","title":"2026년 4분기 강원혁신도시 공유오피스 조성 지원사업 공고","period":"2026-11-11 ~ 2026-11-26","status":"모집중(D-13)","days_left":13,"agency":"강원특별자치도","executor":"강원혁신도시발전지원센터","registered_at":"2026-11-13","views":568,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127918"},{"id":"KST_179775","source":"창업넷","category":"창업교육","region":"전국","target":"창업·예비창업","title":"2026 여성벤처활성화사업 「여성벤처&스타트업 혁신성장 포럼」참여자 모집","period":"2026-11-11 ~ 2026-11-26","status":"모집중(D-13)","days_left":13,"agency":"(사)한국여성벤처협회","executor":"(사)한국여성벤처협회","registered_at":"2026-11-11","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179775"},{"id":"PBLN_000000000127861","source":"기업마당","category":"수출","region":"전국","target":"중소기업·전체","title":"2027년 중국 춘계(상해) 의료기기 전시회(CMEF Shanghai 2027) 한국관 참가기업 모집 공고","period":"2026-11-11 ~ 2026-11-27","status":"모집중(D-14)","days_left":14,"agency":"산업통상부","executor":"대한무역투자진흥공사","registered_at":"2026-11-11","views":3007,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127861"},{"id":"PBLN_000000000127855","source":"기업마당","category":"수출","region":"전국","target":"중소기업·전체","title":"2027년 미국 시카고 레스토랑 전시회 (National Restaurant Association Show 2027) 한국관 참가기업 모집 공고","period":"2026-11-10 ~ 2026-11-27","status":"모집중(D-14)","days_left":14,"agency":"산업통상부","executor":"대한무역투자진흥공사","registered_at":"2026-11-11","views":2904,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127855"},{"id":"PBLN_000000000127874","source":"기업마당","category":"내수","region":"부산","target":"중소기업·전체","title":"[부산] 2027년 국내전시회 참가지원 참여기업 모집 공고(국제의료기기·병원설비전시회 (2027 KIMES))","period":"2026-11-11 ~ 2026-11-27","status":"모집중(D-14)","days_left":14,"agency":"부산광역시","executor":"부산테크노파크","registered_at":"2026-11-12","views":946,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127874"},{"id":"PBLN_000000000127907","source":"기업마당","category":"경영","region":"서울","target":"중소기업·전체","title":"2027년 서울 창신 의류제조 공동인프라 운영기관 모집 공고","period":"2026-11-12 ~ 2026-11-27","status":"모집중(D-14)","days_left":14,"agency":"중소벤처기업부","executor":"소상공인시장진흥공단","registered_at":"2026-11-13","views":233,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127907"},{"id":"PBLN_000000000127901","source":"기업마당","category":"내수","region":"부산","target":"중소기업·전체","title":"[부산] 2027년 고령친화산업 육성 지원사업 국내전시회 참가지원 참여기업 모집 공고 국제의료기기&병원설비전시회 (2027 KIMES)","period":"2026-11-11 ~ 2026-11-27","status":"모집중(D-14)","days_left":14,"agency":"부산광역시","executor":"부산테크노파크","registered_at":"2026-11-13","views":222,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127901"},{"id":"PBLN_000000000127858","source":"기업마당","category":"수출","region":"전국","target":"중소기업·전체","title":"2027년 스페인 바르셀로나 비타푸드 전시회(Vitafoods Europe 2027) 한국관 참가기업 모집 공고","period":"2026-11-11 ~ 2026-11-30","status":"모집중(D-17)","days_left":17,"agency":"산업통상부","executor":"대한무역투자진흥공사","registered_at":"2026-11-11","views":3039,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127858"},{"id":"KST_179761","source":"창업넷","category":"시설·공간·보육","region":"전국","target":"창업·예비창업","title":"2026년 한라대학교 창업보육센터 11월 신규입주기업 모집 공고","period":"2026-11-09 ~ 2026-11-30","status":"모집중(D-17)","days_left":17,"agency":"한라대학교산학협력단","executor":"한라대학교산학협력단","registered_at":"2026-11-10","views":2815,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179761"},{"id":"PBLN_000000000127897","source":"기업마당","category":"경영","region":"경기","target":"중소기업·전체","title":"[경기] 구리시 2027년 유기질비료 지원사업 추가 신청접수 공고","period":"2026-11-12 ~ 2026-11-30","status":"모집중(D-17)","days_left":17,"agency":"경기도","executor":"기초자치단체","registered_at":"2026-11-12","views":2034,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127897"},{"id":"PBLN_000000000127895","source":"기업마당","category":"경영","region":"강원","target":"청년","title":"[강원] 양양군 2027년 청년어촌정착지원 사업자 모집 공고","period":"2026-11-09 ~ 2026-11-30","status":"모집중(D-17)","days_left":17,"agency":"강원특별자치도","executor":"기초자치단체","registered_at":"2026-11-12","views":2028,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127895"},{"id":"PBLN_000000000127893","source":"기업마당","category":"수출","region":"강원","target":"중소기업·전체","title":"[강원] 정선군 2026년 수출 신선농산물 공동선별비 지원 사업 신청 안내 공고","period":"2026-11-10 ~ 2026-11-30","status":"모집중(D-17)","days_left":17,"agency":"강원특별자치도","executor":"기초자치단체","registered_at":"2026-11-12","views":2027,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127893"},{"id":"PBLN_000000000127887","source":"기업마당","category":"경영","region":"전남광주","target":"중소기업·전체","title":"[전남광주] 여수시 2026년 청정어장 굴 전략품목 육성 지원사업 대상자 모집 공고","period":"2026-11-11 ~ 2026-11-30","status":"모집중(D-17)","days_left":17,"agency":"전남광주통합특별시","executor":"기초자치단체","registered_at":"2026-11-12","views":1960,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127887"},{"id":"PBLN_000000000127927","source":"기업마당","category":"경영","region":"전남광주","target":"중소기업·전체","title":"[전남광주] 광양시 2026년 하반기 아동친화업소 존중(尊重) Zone 지원사업 참여자 모집 공고","period":"2026-11-10 ~ 2026-11-30","status":"모집중(D-17)","days_left":17,"agency":"전남광주통합특별시","executor":"기초자치단체","registered_at":"2026-11-13","views":564,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127927"},{"id":"PBLN_000000000127921","source":"기업마당","category":"경영","region":"부산","target":"중소기업·전체","title":"[부산] 북구 2027년 유기질비료지원사업 추가·변경신청 공고","period":"2026-11-10 ~ 2026-11-30","status":"모집중(D-17)","days_left":17,"agency":"부산광역시","executor":"기초자치단체","registered_at":"2026-11-13","views":539,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127921"},{"id":"PBLN_000000000127905","source":"기업마당","category":"수출","region":"경기","target":"중소기업·전체","title":"[경기] 이천시 2026년 6차 해외규격인증 지원사업 참여기업 모집 공고","period":"2026-11-12 ~ 2026-11-30","status":"모집중(D-17)","days_left":17,"agency":"경기도","executor":"경기도경제과학진흥원","registered_at":"2026-11-13","views":258,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127905"},{"id":"KST_179786","source":"창업넷","category":"시설·공간·보육","region":"충북","target":"중소기업·전체","title":"충북대학교 『글로벌(G)테크벤처센터(BI) 』 입주기업 모집","period":"2026-11-11 ~ 2026-11-30","status":"모집중(D-17)","days_left":17,"agency":"충북대학교","executor":"충북대학교","registered_at":"2026-11-12","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179786"},{"id":"PBLN_000000000127875","source":"기업마당","category":"경영","region":"경북","target":"중소기업·전체","title":"[경북] 2026년 2차 경북세일페스타 유통사 입점 마케팅 데이 참여기업 모집 공고","period":"2026-11-11 ~ 2026-12-02","status":"모집중(D-19)","days_left":19,"agency":"경상북도","executor":"경상북도경제진흥원","registered_at":"2026-11-12","views":974,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127875"},{"id":"KST_179756","source":"창업넷","category":"행사·네트워크","region":"전국","target":"중소기업·전체","title":"VC밋업 : 4인의 심사역과 함께하는 테이블토크","period":"2026-11-09 ~ 2026-12-03","status":"모집중(D-20)","days_left":20,"agency":"관악구청","executor":"관악구청","registered_at":"2026-11-09","views":3942,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179756"},{"id":"KST_179748","source":"창업넷","category":"시설·공간·보육","region":"인천","target":"중소기업·전체","title":"2027년 1인 창조기업 지원센터 상반기 신규 입주기업 1차 모집 공고","period":"2026-11-06 ~ 2026-12-04","status":"모집중(D-21)","days_left":21,"agency":"인천테크노파크","executor":"인천테크노파크","registered_at":"2026-11-09","views":4412,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179748"},{"id":"PBLN_000000000127889","source":"기업마당","category":"경영","region":"전남광주","target":"중소기업·전체","title":"[전남광주] 여수시 2027년 수산식품 분야 포장재 지원 사업자 모집 공고","period":"2026-11-11 ~ 2026-12-04","status":"모집중(D-21)","days_left":21,"agency":"전남광주통합특별시","executor":"기초자치단체","registered_at":"2026-11-12","views":2062,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127889"},{"id":"PBLN_000000000127898","source":"기업마당","category":"경영","region":"경기","target":"중소기업·전체","title":"[경기] 시흥시 2027년 유기질비료 지원사업 추가 신청 공고","period":"2026-11-09 ~ 2026-12-04","status":"모집중(D-21)","days_left":21,"agency":"경기도","executor":"기초자치단체","registered_at":"2026-11-12","views":2056,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127898"},{"id":"PBLN_000000000127928","source":"기업마당","category":"창업","region":"전남광주","target":"청년","title":"[전남광주] 보성군 2027년 청년어촌정착 지원사업 신청 공고","period":"2026-11-12 ~ 2026-12-04","status":"모집중(D-21)","days_left":21,"agency":"전남광주통합특별시","executor":"기초자치단체","registered_at":"2026-11-13","views":584,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127928"},{"id":"PBLN_000000000127914","source":"기업마당","category":"경영","region":"전남광주","target":"중소기업·전체","title":"[전남광주] 여수시 2027년 수산식품 가공설비 지원 분야 사업자 모집 공고","period":"2026-11-12 ~ 2026-12-04","status":"모집중(D-21)","days_left":21,"agency":"전남광주통합특별시","executor":"기초자치단체","registered_at":"2026-11-13","views":208,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127914"},{"id":"KST_179758","source":"창업넷","category":"시설·공간·보육","region":"경기","target":"창업·예비창업","title":"경기창업혁신공간(동부권역_하남) 2026년 11월 신규 입주기업 모집","period":"2026-11-09 ~ 2026-12-06","status":"모집중(D-23)","days_left":23,"agency":"(재)경기도경제과학진흥원","executor":"(재)경기도경제과학진흥원","registered_at":"2026-11-09","views":4877,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179758"},{"id":"PBLN_000000000127906","source":"기업마당","category":"창업","region":"전국","target":"창업·예비창업","title":"2027년 농촌창업 경진대회 참여자 모집 공고","period":"2026-11-13 ~ 2026-12-10","status":"모집중(D-27)","days_left":27,"agency":"농림축산식품부","executor":"한국농어촌공사","registered_at":"2026-11-13","views":316,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127906"},{"id":"PBLN_000000000127912","source":"기업마당","category":"수출","region":"전국","target":"중소기업·전체","title":"2026년 K-푸드 콜드풀링 시범사업 이용업체 모집 변경 공고","period":"2026-11-12 ~ 2026-12-10","status":"모집중(D-27)","days_left":27,"agency":"농림축산식품부","executor":"한국농수산식품유통공사","registered_at":"2026-11-13","views":267,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127912"},{"id":"PBLN_000000000127866","source":"기업마당","category":"창업","region":"강원","target":"청년","title":"[강원] 삼척시 2027년 삼척형 청년 스타트업 창업 지원사업 참여자 모집 공고","period":"2026-11-11 ~ 2026-12-11","status":"모집중(D-28)","days_left":28,"agency":"강원특별자치도","executor":"기초자치단체","registered_at":"2026-11-11","views":2867,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127866"},{"id":"PBLN_000000000127888","source":"기업마당","category":"기술","region":"전국","target":"중소기업·전체","title":"2026년 4차 해양수산부 혁신제품 지정 시행 공고","period":"2026-11-10 ~ 2026-12-11","status":"모집중(D-28)","days_left":28,"agency":"해양수산부","executor":"해양수산과학기술진흥원","registered_at":"2026-11-12","views":2419,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127888"},{"id":"PBLN_000000000127851","source":"기업마당","category":"경영","region":"전국","target":"중소기업·전체","title":"2027년 대한민국 중소기업대회 유공자 포상 신청 공고","period":"2026-11-10 ~ 2026-12-11","status":"모집중(D-28)","days_left":28,"agency":"중소벤처기업부","executor":"중소기업중앙회","registered_at":"2026-11-11","views":1756,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127851"},{"id":"PBLN_000000000127884","source":"기업마당","category":"수출","region":"전국","target":"중소기업·전체","title":"2027년 미국 바이오 전시회 (BIO USA 2027)한국관 참가기업 모집 공고","period":"2026-11-12 ~ 2026-12-11","status":"모집중(D-28)","days_left":28,"agency":"산업통상부","executor":"대한무역투자진흥공사","registered_at":"2026-11-12","views":1296,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127884"},{"id":"PBLN_000000000127919","source":"기업마당","category":"경영","region":"경기","target":"중소기업·전체","title":"[경기] 시흥시 2027년 수산자원보호 직접직불제 사업대상자 모집 공고","period":"2026-11-16 ~ 2026-12-11","status":"모집중(D-28)","days_left":28,"agency":"경기도","executor":"기초자치단체","registered_at":"2026-11-13","views":555,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127919"},{"id":"PBLN_000000000127916","source":"기업마당","category":"경영","region":"부산","target":"중소기업·전체","title":"[부산] 서구 2027년 수산자원보호 직불제 사업 신청안내 공고","period":"2026-11-16 ~ 2026-12-11","status":"모집중(D-28)","days_left":28,"agency":"부산광역시","executor":"기초자치단체","registered_at":"2026-11-13","views":545,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127916"},{"id":"PBLN_000000000127920","source":"기업마당","category":"경영","region":"울산","target":"중소기업·전체","title":"[울산] 북구 2027년 수산공익직불제(수산자원보호직불제) 사업 공고","period":"2026-11-16 ~ 2026-12-11","status":"모집중(D-28)","days_left":28,"agency":"울산광역시","executor":"기초자치단체","registered_at":"2026-11-13","views":544,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127920"},{"id":"PBLN_000000000127922","source":"기업마당","category":"경영","region":"전남광주","target":"중소기업·전체","title":"[전남광주] 여수시 2027년 수산공익직불제(수산자원보호직불제) 사업 공고","period":"2026-11-16 ~ 2026-12-11","status":"모집중(D-28)","days_left":28,"agency":"전남광주통합특별시","executor":"기초자치단체","registered_at":"2026-11-13","views":541,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127922"},{"id":"PBLN_000000000127899","source":"기업마당","category":"경영","region":"경기","target":"중소기업·전체","title":"[경기] 양주시 2027년 유기농업자재 지원사업 신청 공고","period":"2026-11-09 ~ 2026-12-31","status":"모집중(D-48)","days_left":48,"agency":"경기도","executor":"기초자치단체","registered_at":"2026-11-12","views":2100,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127899"},{"id":"PBLN_000000000127869","source":"기업마당","category":"경영","region":"강원","target":"소상공인·자영업","title":"[강원] 평창군 2026년 생계형 1인 자영업자 사회보험료 지원 공고","period":"상시 접수","status":"상시·소진시","days_left":null,"agency":"강원특별자치도","executor":"기초자치단체","registered_at":"2026-11-11","views":2720,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127869"},{"id":"PBLN_000000000127868","source":"기업마당","category":"경영","region":"강원","target":"중소기업·전체","title":"[강원] 평창군 사회보험료 지원 공고","period":"상시 접수","status":"상시·소진시","days_left":null,"agency":"강원특별자치도","executor":"기초자치단체","registered_at":"2026-11-11","views":2506,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127868"},{"id":"PBLN_000000000127891","source":"기업마당","category":"수출","region":"인천","target":"중소기업·전체","title":"[인천] 2026년 2차 수출기업 물류비 지원사업 공고","period":"선착순 접수","status":"모집중","days_left":null,"agency":"인천광역시","executor":"인천상공회의소","registered_at":"2026-11-12","views":2340,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127891"},{"id":"PBLN_000000000127890","source":"기업마당","category":"기술","region":"인천","target":"중소기업·전체","title":"[인천] 동구·검단구·강화군 2026년 3차 국내외 권리화 지원사업 모집 공고","period":"예산 소진시까지","status":"상시·소진시","days_left":null,"agency":"인천광역시","executor":"인천지식재산센터","registered_at":"2026-11-12","views":2139,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127890"},{"id":"PBLN_000000000127870","source":"기업마당","category":"기술","region":"경기","target":"중소기업·전체","title":"[경기] 안산시 2026년 국가기술거래플랫폼 기술코칭 참여기업 추가모집 공고","period":"예산 소진시까지","status":"상시·소진시","days_left":null,"agency":"경기도","executor":"경기테크노파크","registered_at":"2026-11-12","views":1045,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127870"},{"id":"PBLN_000000000127926","source":"기업마당","category":"인력","region":"전남광주","target":"중소기업·전체","title":"[전남광주] 광양시 2026년 기업환경 개선사업 참여기업 추가 모집 재공고","period":"예산 소진시까지","status":"상시·소진시","days_left":null,"agency":"전남광주통합특별시","executor":"광양여성새로일하기센터","registered_at":"2026-11-13","views":577,"url":"https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127926"},{"id":"KST_179762","source":"창업넷","category":"멘토링·컨설팅·교육","region":"제주","target":"창업·예비창업","title":"2026년 스타트업 법률지원사업 제주특별자치도 법률상담회 참여기업 모집","period":"상세 공고 확인","status":"모집중","days_left":null,"agency":"창업진흥원","executor":"창업진흥원","registered_at":"","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179762"},{"id":"KST_179698","source":"창업넷","category":"멘토링·컨설팅·교육","region":"제주","target":"창업·예비창업","title":"2026년 스타트업 법률지원사업 제주특별자치도 법률상담회 참여기업 모집","period":"상세 공고 확인","status":"모집중","days_left":null,"agency":"창업진흥원","executor":"창업진흥원","registered_at":"","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179698"},{"id":"KST_179705","source":"창업넷","category":"사업화","region":"전국","target":"창업·예비창업","title":"신산업 분야 및 시장전문가 예비위원단 공개모집","period":"상세 공고 확인","status":"모집중","days_left":null,"agency":"창업진흥원","executor":"창업진흥원","registered_at":"","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179705"},{"id":"KST_178802","source":"창업넷","category":"시설·공간·보육","region":"전국","target":"창업·예비창업","title":"2027년도 초기창업·창업도약 패키지 사업 신규 주관기관 모집 수정공고","period":"상세 공고 확인","status":"모집중","days_left":null,"agency":"창업진흥원","executor":"창업진흥원","registered_at":"","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=178802"},{"id":"KST_178803","source":"창업넷","category":"시설·공간·보육","region":"전국","target":"중소기업·전체","title":"2026 SVC Seoul 멤버십(확장형) 모집공고","period":"상세 공고 확인","status":"모집중","days_left":null,"agency":"창업진흥원","executor":"창업진흥원","registered_at":"","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=178803"},{"id":"KST_176076","source":"창업넷","category":"사업화","region":"전국","target":"창업·예비창업","title":"2026 SVC Seoul Membership(Global) Recruitment Announcement","period":"상세 공고 확인","status":"모집중","days_left":null,"agency":"창업진흥원","executor":"창업진흥원","registered_at":"","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=176076"},{"id":"KST_175783","source":"창업넷","category":"사업화","region":"전국","target":"창업·예비창업","title":"2026년 팁스(TIPS) 창업기업 지원계획 수정 공고","period":"상세 공고 확인","status":"모집중","days_left":null,"agency":"창업진흥원","executor":"창업진흥원","registered_at":"","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=175783"},{"id":"KST_171419","source":"창업넷","category":"인력","region":"전국","target":"창업·예비창업","title":"2026년 중앙부처 및 지자체 창업지원사업 통합공고","period":"상세 공고 확인","status":"모집중","days_left":null,"agency":"창업진흥원","executor":"창업진흥원","registered_at":"","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=171419"},{"id":"KST_179764","source":"창업넷","category":"행사·네트워크","region":"알파브라더스","target":"창업·예비창업","title":"[알파브라더스] 「2026 충청 스타트업 벤처포럼」 2회차-오픈이노베이션 교류회 참가 안내의 건","period":"상세 공고 확인","status":"모집중","days_left":null,"agency":"호서대학교 창업중심대학사업단","executor":"호서대학교 창업중심대학사업단","registered_at":"2026-11-10","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179764"},{"id":"KST_179766","source":"창업넷","category":"멘토링·컨설팅·교육","region":"강동구 청년해냄센터","target":"청년","title":"[강동구 청년해냄센터] 2027년 정부 지원 사업 대비 성공 창업 스쿨 참가자 모집 공고","period":"상세 공고 확인","status":"모집중","days_left":null,"agency":"강동구 청년해냄센터","executor":"강동구 청년해냄센터","registered_at":"2026-11-10","views":0,"url":"https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=179766"}]};
+
+const searchInput = document.getElementById("searchInput");
+const regionSelect = document.getElementById("regionSelect");
+const targetSelect = document.getElementById("targetSelect");
+const catSelect = document.getElementById("catSelect");
+const sourceSelect = document.getElementById("sourceSelect");
+const urgentToggle = document.getElementById("urgentToggle");
+const grantList = document.getElementById("grantList");
+
+let onlyUrgent = false;
+
+function initFilters() {
+  document.getElementById("updatedAt").textContent = "기준 " + DB.updated_at;
+  document.getElementById("statTotal").textContent = DB.total_count + "건";
+  document.getElementById("statUrgent").textContent = DB.urgent_count + "건";
+
+  const regions = [...new Set(DB.items.map(i => i.region))].sort();
+  const targets = [...new Set(DB.items.map(i => i.target))].sort();
+  const cats = [...new Set(DB.items.map(i => i.category))].sort();
+  const sources = [...new Set(DB.items.map(i => i.source))].sort();
+
+  regions.forEach(r => { const o = document.createElement("option"); o.value = r; o.textContent = "지역: " + r; regionSelect.appendChild(o); });
+  targets.forEach(t => { const o = document.createElement("option"); o.value = t; o.textContent = "대상: " + t; targetSelect.appendChild(o); });
+  cats.forEach(c => { const o = document.createElement("option"); o.value = c; o.textContent = "분야: " + c; catSelect.appendChild(o); });
+  sources.forEach(s => { const o = document.createElement("option"); o.value = s; o.textContent = "출처: " + s; sourceSelect.appendChild(o); });
+}
+
+function render() {
+  const q = searchInput.value.trim().toLowerCase();
+  const reg = regionSelect.value;
+  const tgt = targetSelect.value;
+  const cat = catSelect.value;
+  const src = sourceSelect.value;
+
+  const filtered = DB.items.filter(it => {
+    if (reg && it.region !== reg) return false;
+    if (tgt && it.target !== tgt) return false;
+    if (cat && it.category !== cat) return false;
+    if (src && it.source !== src) return false;
+    if (onlyUrgent && (it.days_left === null || it.days_left > 7 || it.days_left < 0)) return false;
+    if (q) {
+      const hay = (it.title + " " + it.agency + " " + it.executor + " " + it.region + " " + it.target).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById("statFiltered").textContent = filtered.length + "건";
+  document.getElementById("resultInfo").textContent = filtered.length + "건 표시 중";
+
+  if (!filtered.length) {
+    grantList.innerHTML = '<div class="empty">선택한 조건에 맞는 지원금 공고가 없습니다.<br>필터를 초기화해 보세요.</div>';
+    return;
+  }
+
+  grantList.innerHTML = filtered.map(it => {
+    const isUrgent = it.days_left !== null && it.days_left >= 0 && it.days_left <= 7;
+    const statusClass = isUrgent ? "urgent" : "ok";
+    return `
+      <div class="item-card">
+        <div class="item-tags">
+          <span class="tag ${statusClass}">${it.status}</span>
+          <span class="tag src">${it.source}</span>
+          <span class="tag region">${it.region}</span>
+          <span class="tag target">${it.target}</span>
+          <span class="tag">${it.category}</span>
+        </div>
+        <div class="item-title">${it.title}</div>
+        <div class="item-meta">
+          <span>신청기간: ${it.period}</span>
+          <span>소관·수행: ${it.agency} / ${it.executor}</span>
+        </div>
+        <div class="item-actions">
+          <a class="btn-link" href="${it.url}" target="_blank" rel="noopener">공고 원문·신청 확인</a>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+searchInput.addEventListener("input", render);
+regionSelect.addEventListener("change", render);
+targetSelect.addEventListener("change", render);
+catSelect.addEventListener("change", render);
+sourceSelect.addEventListener("change", render);
+urgentToggle.addEventListener("click", () => {
+  onlyUrgent = !onlyUrgent;
+  urgentToggle.classList.toggle("active", onlyUrgent);
+  render();
+});
+
+initFilters();
+render();
+</script>
+</body>
+</html>
